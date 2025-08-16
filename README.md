@@ -4,15 +4,15 @@
 [![Documentation](https://img.shields.io/docsrs/dou_dizhu)](https://docs.rs/dou_dizhu)
 [![License](https://img.shields.io/crates/l/dou_dizhu)](#license)
 
-This crate is a Rust toolkit for the Chinese card game [Dou Dizhu](https://en.wikipedia.org/wiki/Dou_dizhu).
-It provides hand representation, category recognition, ordering, and validation at both compile time and runtime.
+A Rust toolkit for the Chinese card game [Dou Dizhu](https://en.wikipedia.org/wiki/Dou_dizhu).
 
 ## Features
 
 - Hand representation
-- All standard Dou Dizhu combinations
-- Hand comparison by game rules
 - Compile-time and runtime validation
+- All standard Dou Dizhu play kinds (solo, pair, trio, chain, airplane, rocket, etc.)
+- Play kind recognition
+- Play comparison
 
 ## Usage
 
@@ -26,26 +26,32 @@ dou_dizhu = "0.1"
 Then:
 
 ```rust
-use dou_dizhu::{hand, Hand};
+use dou_dizhu::{Hand, Play, Rank, core::Guard, hand};
 
 fn main() {
-    // Compile-time evaluated hand
-    let four_with_dual_solo: Hand = hand!(const {
+    // Hand created during compilation, recognized as a play at runtime
+    let p1: Guard<Play> = hand!(const {
         King: 4,
-        Four,
-        Five,
-    });
+        BlackJoker,
+        Ace,
+    })
+        .to_play()
+        .unwrap();
 
-    // Runtime evaluated hand
-    let bomb: Hand = hand!({
-        Three: {
-            println!("evaluating bomb");
-            4
-        },
-    }).unwrap();
+    // Hand created from an explicit counts array, recognized as a play
+    let p2: Guard<Play> = Hand::try_from({
+        let mut counts = [0u8; 15];
+        counts[Rank::Three as usize] = 4;
+        counts
+    })
+        .unwrap()
+        .to_play()
+        .unwrap();
 
     // A bomb beats four with dual solo
-    assert!(four_with_dual_solo < bomb);
+    assert!(p1 < p2);
+    assert!(matches!(p1.into_inner(), Play::FourWithDualSolo { .. }));
+    assert!(matches!(p2.into_inner(), Play::Bomb(_)));
 }
 ```
 
