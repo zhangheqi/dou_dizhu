@@ -20,7 +20,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-dou_dizhu = "0.1"
+dou_dizhu = "0.2"
 ```
 
 Then:
