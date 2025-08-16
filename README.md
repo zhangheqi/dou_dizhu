@@ -4,7 +4,9 @@
 [![Documentation](https://img.shields.io/docsrs/dou_dizhu)](https://docs.rs/dou_dizhu)
 [![License](https://img.shields.io/crates/l/dou_dizhu)](#license)
 
-A Rust toolkit for the Chinese card game [Dou Dizhu](https://en.wikipedia.org/wiki/Dou_dizhu).
+A Rust toolkit for the Chinese card game Dou Dizhu (斗地主).
+
+This crate implements Dou Dizhu strictly following the [Pagat rules](https://www.pagat.com/climbing/doudizhu.html), though it uses different terminology.
 
 ## Features
 
