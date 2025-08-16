@@ -35,8 +35,8 @@ fn main() {
         BlackJoker,
         Ace,
     })
-        .to_play()
-        .unwrap();
+    .to_play()
+    .unwrap();
 
     // Hand created from an explicit counts array, recognized as a play
     let p2: Guard<Play> = Hand::try_from({
@@ -44,9 +44,9 @@ fn main() {
         counts[Rank::Three as usize] = 4;
         counts
     })
-        .unwrap()
-        .to_play()
-        .unwrap();
+    .unwrap()
+    .to_play()
+    .unwrap();
 
     // A bomb beats four with dual solo
     assert!(p1 < p2);
