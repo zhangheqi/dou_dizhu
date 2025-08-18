@@ -36,7 +36,7 @@ impl TryFrom<&[u8]> for Hand {
 }
 
 impl Hand {
-    /// Creates a [`Hand`] representing the full 54-card Dou Dizhu deck.
+    /// Creates a `Hand` representing the full 54-card Dou Dizhu deck.
     pub const fn full_deck() -> Self {
         let mut counts = [4u8; 15];
         counts[Rank::BlackJoker as usize] = 1;
@@ -61,7 +61,7 @@ impl Hand {
         self.0
     }
 
-    /// Attempts to recognize this [`Hand`] as a standard [`Play`].
+    /// Attempts to recognize this `Hand` as a standard [`Play`].
     /// 
     /// Returns `None` if the hand does not form a standard play.
     /// 

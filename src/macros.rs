@@ -1,4 +1,4 @@
-/// Macro for constructing `Hand` instances.
+/// Macro for constructing [`Hand`](crate::Hand) instances.
 /// 
 /// # Examples
 /// 

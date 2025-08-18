@@ -1,6 +1,6 @@
 //! Structural analysis of hands.
 //! 
-//! This module provides tools for breaking down a `Hand`
+//! This module provides tools for breaking down a [`Hand`](crate::Hand)
 //! into its raw structural components.
 
 use crate::{core::Guard, Play, Rank};
