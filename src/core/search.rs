@@ -1,3 +1,8 @@
+//! Play search utilities.
+//! 
+//! This module provides functionality for enumerating possible plays
+//! within a [`Hand`]. These plays are not necessarily standard ones.
+
 use std::ops::RangeBounds;
 use crate::Hand;
 
@@ -41,9 +46,17 @@ where
     pub kicker_count: F,
 }
 
-pub trait SearchExt: crate::private::Sealed {
+/// Extension trait for searching for possible plays within a [`Hand`].
+/// 
+/// This trait is sealed and cannot be implemented for types outside of `dou_dizhu`.
+pub trait SearchExt: private::Sealed {
     fn plays<R, F>(self, spec: PlaySpec<R, F>) -> impl Iterator<Item = Hand>
     where
         R: RangeBounds<u8>,
         F: Fn(u8) -> u8;
+}
+
+mod private {
+    pub trait Sealed {}
+    impl Sealed for crate::hand::Hand {}
 }

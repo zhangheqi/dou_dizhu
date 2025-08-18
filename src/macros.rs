@@ -1,3 +1,28 @@
+/// Macro for constructing `Hand` instances.
+/// 
+/// # Examples
+/// 
+/// ```
+/// # fn main() -> Result<(), String> {
+/// use dou_dizhu::{hand, Hand};
+/// 
+/// // Compile-time hand
+/// const FOUR_WITH_DUAL_SOLO: Hand = hand!(const {
+///     Three: 4,
+///     Four,
+///     Five,
+/// });
+/// 
+/// // Hand with runtime-computed card count
+/// let computed: Hand = hand!({
+///     Three: {
+///         println!("computing number of `Three`s...");
+///         2
+///     },
+/// })?;
+/// #     Ok(())
+/// # }
+/// ```
 #[macro_export]
 macro_rules! hand {
     (const {$($t:tt)*}) => {
@@ -8,6 +33,7 @@ macro_rules! hand {
     };
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! __hand {
     (() -> ($($spec:tt)*)($($body:tt)*)($var:ident)) => {
@@ -40,6 +66,7 @@ macro_rules! __hand {
     };
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! __const_hand {
     (() -> ($($body:tt)*)) => {

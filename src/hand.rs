@@ -2,6 +2,7 @@ use std::{mem, ops::{Bound, RangeBounds}};
 use itertools::Itertools;
 use crate::{core::{Composition, CompositionExt, Group, Guard, PlaySpec, SearchExt}, Play, Rank};
 
+/// Representation of a Dou Dizhu hand.
 #[derive(Debug, Clone, Copy)]
 pub struct Hand(pub(crate) [u8; 15]);
 
@@ -35,6 +36,7 @@ impl TryFrom<&[u8]> for Hand {
 }
 
 impl Hand {
+    /// Creates a [`Hand`] representing the full 54-card Dou Dizhu deck.
     pub const fn full_deck() -> Self {
         let mut counts = [4u8; 15];
         counts[Rank::BlackJoker as usize] = 1;
@@ -42,10 +44,38 @@ impl Hand {
         Self(counts)
     }
 
+    /// Returns the internal representation of this hand as an array of card counts.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use dou_dizhu::{hand, Rank};
+    /// 
+    /// let bomb = hand!(const {
+    ///     Ten: 4,
+    /// });
+    /// 
+    /// assert_eq!(bomb.to_array()[Rank::Ten as usize], 4);
+    /// ```
     pub fn to_array(self) -> [u8; 15] {
         self.0
     }
 
+    /// Attempts to recognize this [`Hand`] as a standard [`Play`].
+    /// 
+    /// Returns `None` if the hand does not form a standard play.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use dou_dizhu::{hand, Play};
+    /// 
+    /// let rocket = hand!(const { BlackJoker, RedJoker })
+    ///     .to_play()
+    ///     .unwrap();
+    /// 
+    /// assert!(matches!(rocket.into_inner(), Play::Rocket));
+    /// ```
     pub fn to_play(self) -> Option<Guard<Play>> {
         self.composition().to_play()
     }

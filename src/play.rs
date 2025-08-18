@@ -1,6 +1,9 @@
 use std::{cmp::Ordering, mem};
 use crate::{core::Guard, Rank};
 
+/// A standard Dou Dizhu play.
+/// 
+/// For the full specification of standard plays, see the [Pagat rules for Dou Dizhu](https://www.pagat.com/climbing/doudizhu.html).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Play {
     /// Any single card.

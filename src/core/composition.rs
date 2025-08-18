@@ -1,3 +1,8 @@
+//! Structural analysis of hands.
+//! 
+//! This module provides tools for breaking down a `Hand`
+//! into its raw structural components.
+
 use crate::{core::Guard, Play, Rank};
 
 #[derive(Debug)]
@@ -248,6 +253,14 @@ impl Guard<Composition> {
     }
 }
 
-pub trait CompositionExt: crate::private::Sealed {
+/// Extension trait for converting a type into a [`Composition`].
+/// 
+/// This trait is sealed and cannot be implemented for types outside of `dou_dizhu`.
+pub trait CompositionExt: private::Sealed {
     fn composition(self) -> Guard<Composition>;
+}
+
+mod private {
+    pub trait Sealed {}
+    impl Sealed for crate::hand::Hand {}
 }
