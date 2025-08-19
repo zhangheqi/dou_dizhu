@@ -1,6 +1,6 @@
-use std::{mem, ops::{Bound, RangeBounds}};
+use std::{iter, mem, ops::{Bound, RangeBounds}};
 use itertools::Itertools;
-use crate::{core::{Composition, CompositionExt, Group, Guard, PlaySpec, SearchExt}, Play, Rank};
+use crate::{core::{Composition, CompositionExt, Group, Guard, PlaySpec, SearchExt}, Play, PlayKind, Rank};
 
 /// Representation of a Dou Dizhu hand.
 #[derive(Debug, Clone, Copy)]
@@ -77,7 +77,25 @@ impl Hand {
     /// assert!(matches!(rocket.into_inner(), Play::Rocket));
     /// ```
     pub fn to_play(self) -> Option<Guard<Play>> {
-        self.composition().to_play()
+        self.composition().guess_play()
+    }
+
+    pub fn plays(self, kind: PlayKind) -> impl Iterator<Item = Guard<Play>> {
+        match kind {
+            PlayKind::Rocket => {
+                if self.0[Rank::BlackJoker as usize] == 1
+                    && self.0[Rank::RedJoker as usize] == 1
+                {
+                    Box::new([Guard(Play::Rocket)].into_iter())
+                } else {
+                    Box::new(iter::empty()) as Box<dyn Iterator<Item = Guard<Play>>>
+                }
+            }
+            kind => Box::new(
+                SearchExt::plays(self, PlaySpec::standard(kind))
+                    .map(move |x| x.composition().to_play(kind).unwrap()),
+            ),
+        }
     }
 }
 
@@ -119,10 +137,10 @@ impl CompositionExt for Hand {
 }
 
 impl SearchExt for Hand {
-    fn plays<R, F>(self, spec: PlaySpec<R, F>) -> impl Iterator<Item = Hand>
+    fn plays<R, F>(self, mut spec: PlaySpec<R, F>) -> impl Iterator<Item = Hand>
     where
         R: RangeBounds<u8>,
-        F: Fn(u8) -> u8,
+        F: FnMut(u8) -> u8,
     {
         let primal_count_min = match spec.primal_count.start_bound() {
             Bound::Included(&n) => n,
@@ -138,78 +156,86 @@ impl SearchExt for Hand {
         }
         .min(12);
 
-        (primal_count_min..=primal_count_max).flat_map(move |primal_count| {
-            let kicker_count = (spec.kicker_count)(primal_count);
-            self.0
-                .into_iter()
-                .zip(0u8..15)
-                .filter(|&(count, rank)| count >= spec.primal_size && (rank < Rank::Two as u8 || primal_count == 1))
-                .map(|(_, rank)| unsafe { mem::transmute(rank) })
-                .collect::<Vec<Rank>>()
-                .chunk_by(|&a, &b| a as u8 + 1 == b as u8)
-                .map(Vec::from)
-                .collect::<Vec<_>>()
-                .into_iter()
-                .flat_map(move |chunk| {
-                    chunk
-                        .windows(primal_count as usize)
-                        .map(Vec::from)
-                        .collect::<Vec<_>>()
-                        .into_iter()
-                        .flat_map(move |primal| {
-                            let mut jokers = Vec::new();
-                            let kicker_candidates = if kicker_count != 0 {
-                                self.0
-                                    .into_iter()
-                                    .zip(0u8..15)
-                                    .map(|(count, rank)| (count, unsafe { mem::transmute(rank) }))
-                                    .filter(|&(count, rank)| {
-                                        if count >= spec.kicker_size && !primal.contains(&rank) {
-                                            if rank > Rank::Two {
-                                                jokers.push(rank);
-                                                false
-                                            } else {
-                                                true
-                                            }
-                                        } else {
-                                            false
-                                        }
-                                    })
-                                    .map(|(_, rank)| rank)
-                                    .collect::<Vec<Rank>>()
-                            } else {
-                                Vec::new()
-                            };
-                            kicker_candidates
-                                .clone()
-                                .into_iter()
-                                .combinations(kicker_count as usize)
-                                .chain(
-                                    jokers
+        (primal_count_min..=primal_count_max)
+            .filter_map(move |primal_count| {
+                let kicker_count = (spec.kicker_count)(primal_count);
+                if kicker_count + primal_count > 15 {
+                    None
+                } else {
+                    Some((primal_count, kicker_count))
+                }
+            })
+            .flat_map(move |(primal_count, kicker_count)| {
+                self.0
+                    .into_iter()
+                    .zip(0u8..15)
+                    .filter(|&(count, rank)| count >= spec.primal_size && (rank < Rank::Two as u8 || primal_count == 1))
+                    .map(|(_, rank)| unsafe { mem::transmute(rank) })
+                    .collect::<Vec<Rank>>()
+                    .chunk_by(|&a, &b| a as u8 + 1 == b as u8)
+                    .map(Vec::from)
+                    .collect::<Vec<_>>()
+                    .into_iter()
+                    .flat_map(move |chunk| {
+                        chunk
+                            .windows(primal_count as usize)
+                            .map(Vec::from)
+                            .collect::<Vec<_>>()
+                            .into_iter()
+                            .flat_map(move |primal| {
+                                let mut jokers = Vec::new();
+                                let kicker_candidates = if kicker_count != 0 {
+                                    self.0
                                         .into_iter()
-                                        .flat_map(move |joker| {
-                                            kicker_candidates
-                                                .clone()
-                                                .into_iter()
-                                                .combinations(kicker_count as usize - 1)
-                                                .map(move |mut kicker| {
-                                                    kicker.push(joker);
-                                                    kicker
-                                                })
+                                        .zip(0u8..15)
+                                        .map(|(count, rank)| (count, unsafe { mem::transmute(rank) }))
+                                        .filter(|&(count, rank)| {
+                                            if count >= spec.kicker_size && !primal.contains(&rank) {
+                                                if rank > Rank::Two {
+                                                    jokers.push(rank);
+                                                    false
+                                                } else {
+                                                    true
+                                                }
+                                            } else {
+                                                false
+                                            }
                                         })
-                                )
-                                .map(move |kicker| {
-                                    let mut counts = [0u8; 15];
-                                    for rank in primal.clone() {
-                                        counts[rank as usize] = spec.primal_size;
-                                    }
-                                    for rank in kicker {
-                                        counts[rank as usize] = spec.kicker_size;
-                                    }
-                                    Hand(counts)
-                                })
-                        })
-                })
-        })
+                                        .map(|(_, rank)| rank)
+                                        .collect::<Vec<Rank>>()
+                                } else {
+                                    Vec::new()
+                                };
+                                kicker_candidates
+                                    .clone()
+                                    .into_iter()
+                                    .combinations(kicker_count as usize)
+                                    .chain(
+                                        jokers
+                                            .into_iter()
+                                            .flat_map(move |joker| {
+                                                kicker_candidates
+                                                    .clone()
+                                                    .into_iter()
+                                                    .combinations(kicker_count as usize - 1)
+                                                    .map(move |mut kicker| {
+                                                        kicker.push(joker);
+                                                        kicker
+                                                    })
+                                            })
+                                    )
+                                    .map(move |kicker| {
+                                        let mut counts = [0u8; 15];
+                                        for rank in primal.clone() {
+                                            counts[rank as usize] = spec.primal_size;
+                                        }
+                                        for rank in kicker {
+                                            counts[rank as usize] = spec.kicker_size;
+                                        }
+                                        Hand(counts)
+                                    })
+                            })
+                    })
+            })
     }
 }

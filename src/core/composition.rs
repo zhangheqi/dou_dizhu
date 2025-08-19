@@ -3,7 +3,7 @@
 //! This module provides tools for breaking down a [`Hand`](crate::Hand)
 //! into its raw structural components.
 
-use crate::{core::Guard, Play, Rank};
+use crate::{core::Guard, Play, PlayKind, Rank};
 
 #[derive(Debug)]
 pub struct Group {
@@ -20,7 +20,7 @@ pub struct Composition {
 }
 
 impl Guard<Composition> {
-    pub fn to_play(&self) -> Option<Guard<Play>> {
+    pub fn guess_play(&self) -> Option<Guard<Play>> {
         macro_rules! try_methods {
             ($self:ident, $($method:ident,)*) => {
                 let mut result;
@@ -45,6 +45,25 @@ impl Guard<Composition> {
             to_rocket,
         );
         None
+    }
+
+    pub fn to_play(&self, kind: PlayKind) -> Option<Guard<Play>> {
+        match kind {
+            PlayKind::Solo => self.to_solo(),
+            PlayKind::Chain => self.to_chain(),
+            PlayKind::Pair => self.to_pair(),
+            PlayKind::PairsChain => self.to_pairs_chain(),
+            PlayKind::Trio => self.to_trio(),
+            PlayKind::Airplane => self.to_airplane(),
+            PlayKind::TrioWithSolo => self.to_trio_with_solo(),
+            PlayKind::AirplaneWithSolos => self.to_airplane_with_solos(),
+            PlayKind::TrioWithPair => self.to_trio_with_pair(),
+            PlayKind::AirplaneWithPairs => self.to_airplane_with_pairs(),
+            PlayKind::Bomb => self.to_bomb(),
+            PlayKind::FourWithDualSolo => self.to_four_with_dual_solo(),
+            PlayKind::FourWithDualPair => self.to_four_with_dual_pair(),
+            PlayKind::Rocket => self.to_rocket(),
+        }
     }
 
     pub fn to_solo(&self) -> Option<Guard<Play>> {

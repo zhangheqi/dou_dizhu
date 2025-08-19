@@ -89,3 +89,13 @@ macro_rules! __const_hand {
         $crate::__const_hand!(($rank: 1, $($t)*) -> ($($body)*))
     };
 }
+
+#[macro_export]
+macro_rules! play {
+    (const {$($t:tt)*}) => {
+        $crate::__const_hand!(($($t)*) -> ()).to_play()
+    };
+    ({$($t:tt)*}) => {
+        $crate::__hand!(($($t)*) -> ()()(var)).ok().and_then(|x| x.to_play())
+    };
+}

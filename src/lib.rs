@@ -12,5 +12,5 @@ mod play;
 mod rank;
 
 pub use hand::Hand;
-pub use play::Play;
+pub use play::{Play, PlayKind, PlayKind::*};
 pub use rank::Rank;

@@ -42,6 +42,27 @@ pub enum Play {
     Rocket,
 }
 
+impl Play {
+    pub const fn kind(&self) -> PlayKind {
+        match self {
+            Play::Solo(_) => PlayKind::Solo,
+            Play::Chain(_) => PlayKind::Chain,
+            Play::Pair(_) => PlayKind::Pair,
+            Play::PairsChain(_) => PlayKind::PairsChain,
+            Play::Trio(_) => PlayKind::Trio,
+            Play::Airplane(_) => PlayKind::Airplane,
+            Play::TrioWithSolo { .. } => PlayKind::TrioWithSolo,
+            Play::AirplaneWithSolos { .. } => PlayKind::AirplaneWithSolos,
+            Play::TrioWithPair { .. } => PlayKind::TrioWithPair,
+            Play::AirplaneWithPairs { .. } => PlayKind::AirplaneWithPairs,
+            Play::Bomb(_) => PlayKind::Bomb,
+            Play::FourWithDualSolo { .. } => PlayKind::FourWithDualSolo,
+            Play::FourWithDualPair { .. } => PlayKind::FourWithDualPair,
+            Play::Rocket => PlayKind::Rocket,
+        }
+    }
+}
+
 impl PartialEq for Guard<Play> {
     fn eq(&self, other: &Self) -> bool {
         self.partial_cmp(other).is_some_and(|x| x.is_eq())
@@ -122,5 +143,45 @@ impl PartialOrd for Guard<Play> {
                 FourWithDualPair { four: _, .. } => _,
             }
         )
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PlayKind {
+    Solo,
+    Chain,
+    Pair,
+    PairsChain,
+    Trio,
+    Airplane,
+    TrioWithSolo,
+    AirplaneWithSolos,
+    TrioWithPair,
+    AirplaneWithPairs,
+    Bomb,
+    FourWithDualSolo,
+    FourWithDualPair,
+    Rocket,
+}
+
+impl PartialOrd for PlayKind {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        if self.eq(other) {
+            return Some(Ordering::Equal);
+        }
+        let self_level = match self {
+            Self::Bomb => 1,
+            Self::Rocket => 2,
+            _ => 0,
+        };
+        let other_level = match other {
+            Self::Bomb => 1,
+            Self::Rocket => 2,
+            _ => 0,
+        };
+        match self_level.cmp(&other_level) {
+            Ordering::Equal => None,
+            ord => Some(ord),
+        }
     }
 }
