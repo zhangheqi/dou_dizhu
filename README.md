@@ -15,6 +15,7 @@ This crate implements Dou Dizhu strictly following the [Pagat rules](https://www
 - All standard Dou Dizhu play kinds (solo, pair, trio, chain, airplane, rocket, etc.)
 - Play kind recognition
 - Play comparison
+- Enumerating all plays of specified characteristics within a hand
 
 ## Usage
 
@@ -28,32 +29,26 @@ dou_dizhu = "0.2"
 Then:
 
 ```rust
-use dou_dizhu::{Hand, Play, Rank, core::Guard, hand};
+use dou_dizhu::*;
 
 fn main() {
-    // Hand created during compilation, recognized as a play at runtime
-    let p1: Guard<Play> = hand!(const {
-        King: 4,
-        BlackJoker,
-        Ace,
+    // Construct a play
+    let airplane_with_solos = play!(const {
+        Queen: 3,
+        King: 3,
+        Three,
+        Four,
     })
-    .to_play()
     .unwrap();
 
-    // Hand created from an explicit counts array, recognized as a play
-    let p2: Guard<Play> = Hand::try_from({
-        let mut counts = [0u8; 15];
-        counts[Rank::Three as usize] = 4;
-        counts
-    })
-    .unwrap()
-    .to_play()
-    .unwrap();
-
-    // A bomb beats four with dual solo
-    assert!(p1 < p2);
-    assert!(matches!(p1.into_inner(), Play::FourWithDualSolo { .. }));
-    assert!(matches!(p2.into_inner(), Play::Bomb(_)));
+    // Count how many stronger plays of the same kind exist in a full deck
+    assert_eq!(
+        Hand::full_deck()
+            .plays(airplane_with_solos.kind())
+            .filter(|p| p > &airplane_with_solos)
+            .count(),
+        77,
+    );
 }
 ```
 
