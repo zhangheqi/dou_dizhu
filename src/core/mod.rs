@@ -6,8 +6,10 @@
 
 pub mod composition;
 pub mod guard;
+pub mod ops;
 pub mod search;
 
 pub use composition::{Composition, CompositionExt, Group};
 pub use guard::Guard;
+pub use ops::{UncheckedAddExt, UncheckedSubExt};
 pub use search::{PlaySpec, SearchExt};

@@ -1,5 +1,5 @@
 use std::{cmp::Ordering, mem};
-use crate::{core::Guard, Rank};
+use crate::{core::{Guard, UncheckedAddExt}, Hand, Rank};
 
 /// A standard Dou Dizhu play.
 /// 
@@ -60,6 +60,12 @@ impl Play {
             Play::FourWithDualPair { .. } => PlayKind::FourWithDualPair,
             Play::Rocket => PlayKind::Rocket,
         }
+    }
+}
+
+impl Guard<Play> {
+    pub fn to_hand(&self) -> Hand {
+        unsafe { Hand::EMPTY.unchecked_add(self) }
     }
 }
 

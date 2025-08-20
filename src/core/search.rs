@@ -3,8 +3,9 @@
 //! This module provides functionality for enumerating possible plays
 //! within a [`Hand`]. These plays are not necessarily standard ones.
 
-use std::ops::{RangeBounds, RangeInclusive};
-use crate::{Hand, PlayKind};
+use std::{mem, ops::{Bound, RangeBounds, RangeInclusive}};
+use itertools::Itertools;
+use crate::{Hand, PlayKind, Rank};
 
 /// Specification for searching for plays in a hand.
 /// Can be used to search for even non-standard plays.
@@ -79,5 +80,109 @@ pub trait SearchExt: private::Sealed {
 
 mod private {
     pub trait Sealed {}
-    impl Sealed for crate::hand::Hand {}
+    impl Sealed for crate::Hand {}
+}
+
+impl SearchExt for Hand {
+    fn plays<R, F>(self, mut spec: PlaySpec<R, F>) -> impl Iterator<Item = Hand>
+    where
+        R: RangeBounds<u8>,
+        F: FnMut(u8) -> u8,
+    {
+        let primal_count_min = match spec.primal_count.start_bound() {
+            Bound::Included(&n) => n,
+            Bound::Excluded(&n) => n + 1,
+            Bound::Unbounded => 1,
+        }
+        .max(1);
+
+        let primal_count_max = match spec.primal_count.end_bound() {
+            Bound::Included(&n) => n,
+            Bound::Excluded(&n) => n - 1,
+            Bound::Unbounded => 12,
+        }
+        .min(12);
+
+        (primal_count_min..=primal_count_max)
+            .filter_map(move |primal_count| {
+                let kicker_count = (spec.kicker_count)(primal_count);
+                if kicker_count + primal_count > 15 {
+                    None
+                } else {
+                    Some((primal_count, kicker_count))
+                }
+            })
+            .flat_map(move |(primal_count, kicker_count)| {
+                self.0
+                    .into_iter()
+                    .zip(0u8..15)
+                    .filter(|&(count, rank)| count >= spec.primal_size && (rank < Rank::Two as u8 || primal_count == 1))
+                    .map(|(_, rank)| unsafe { mem::transmute(rank) })
+                    .collect::<Vec<Rank>>()
+                    .chunk_by(|&a, &b| a as u8 + 1 == b as u8)
+                    .map(Vec::from)
+                    .collect::<Vec<_>>()
+                    .into_iter()
+                    .flat_map(move |chunk| {
+                        chunk
+                            .windows(primal_count as usize)
+                            .map(Vec::from)
+                            .collect::<Vec<_>>()
+                            .into_iter()
+                            .flat_map(move |primal| {
+                                let mut jokers = Vec::new();
+                                let kicker_candidates = if kicker_count != 0 {
+                                    self.0
+                                        .into_iter()
+                                        .zip(0u8..15)
+                                        .map(|(count, rank)| (count, unsafe { mem::transmute(rank) }))
+                                        .filter(|&(count, rank)| {
+                                            if count >= spec.kicker_size && !primal.contains(&rank) {
+                                                if rank > Rank::Two {
+                                                    jokers.push(rank);
+                                                    false
+                                                } else {
+                                                    true
+                                                }
+                                            } else {
+                                                false
+                                            }
+                                        })
+                                        .map(|(_, rank)| rank)
+                                        .collect::<Vec<Rank>>()
+                                } else {
+                                    Vec::new()
+                                };
+                                kicker_candidates
+                                    .clone()
+                                    .into_iter()
+                                    .combinations(kicker_count as usize)
+                                    .chain(
+                                        jokers
+                                            .into_iter()
+                                            .flat_map(move |joker| {
+                                                kicker_candidates
+                                                    .clone()
+                                                    .into_iter()
+                                                    .combinations(kicker_count as usize - 1)
+                                                    .map(move |mut kicker| {
+                                                        kicker.push(joker);
+                                                        kicker
+                                                    })
+                                            })
+                                    )
+                                    .map(move |kicker| {
+                                        let mut counts = [0u8; 15];
+                                        for rank in primal.clone() {
+                                            counts[rank as usize] = spec.primal_size;
+                                        }
+                                        for rank in kicker {
+                                            counts[rank as usize] = spec.kicker_size;
+                                        }
+                                        Hand(counts)
+                                    })
+                            })
+                    })
+            })
+    }
 }

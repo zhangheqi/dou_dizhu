@@ -3,7 +3,8 @@
 //! This module provides tools for breaking down a [`Hand`](crate::Hand)
 //! into its raw structural components.
 
-use crate::{core::Guard, Play, PlayKind, Rank};
+use std::mem;
+use crate::{core::Guard, Hand, Play, PlayKind, Rank};
 
 #[derive(Debug)]
 pub struct Group {
@@ -281,5 +282,42 @@ pub trait CompositionExt: private::Sealed {
 
 mod private {
     pub trait Sealed {}
-    impl Sealed for crate::hand::Hand {}
+    impl Sealed for crate::Hand {}
+}
+
+impl CompositionExt for Hand {
+    fn composition(self) -> Guard<Composition> {
+        let Hand(counts) = self;
+        let mut comp = Composition {
+            solos: Group { ranks: Vec::new(), consecutive: true },
+            pairs: Group { ranks: Vec::new(), consecutive: true },
+            trios: Group { ranks: Vec::new(), consecutive: true },
+            fours: Group { ranks: Vec::new(), consecutive: true },
+        };
+        macro_rules! update_group {
+            ($group:expr, $index:ident) => {
+                {
+                    if $group.consecutive {
+                        if $index >= Rank::Two as u8 {
+                            $group.consecutive = false;
+                        } else if let Some(&rank) = $group.ranks.last() && $index - rank as u8 != 1 {
+                            $group.consecutive = false;
+                        }
+                    }
+                    $group.ranks.push(unsafe { mem::transmute($index) });
+                }
+            };
+        }
+        for i in 0u8..15 {
+            match counts[i as usize] {
+                0 => (),
+                1 => update_group!(comp.solos, i),
+                2 => update_group!(comp.pairs, i),
+                3 => update_group!(comp.trios, i),
+                4 => update_group!(comp.fours, i),
+                _ => unreachable!(),
+            }
+        }
+        Guard(comp)
+    }
 }

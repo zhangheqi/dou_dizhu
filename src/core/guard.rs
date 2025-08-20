@@ -42,6 +42,10 @@ impl<T> Guard<T> {
     pub fn into_inner(self) -> T {
         self.0
     }
+
+    pub unsafe fn new_unchecked(value: T) -> Self {
+        Self(value)
+    }
 }
 
 // NOTE: We intentionally do NOT implement `DerefMut`.
