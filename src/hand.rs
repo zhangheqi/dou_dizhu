@@ -1,4 +1,4 @@
-use std::{iter, mem};
+use std::{iter, mem, ops::Index};
 use crate::{core::{CompositionExt, Guard, PlaySpec, SearchExt}, Play, PlayKind, Rank};
 
 /// Representation of a Dou Dizhu hand.
@@ -54,7 +54,7 @@ impl Hand {
     /// 
     /// assert_eq!(bomb.to_array()[Rank::Ten as usize], 4);
     /// ```
-    pub fn to_array(self) -> [u8; 15] {
+    pub const fn to_array(self) -> [u8; 15] {
         self.0
     }
 
@@ -93,5 +93,38 @@ impl Hand {
                     .map(move |x| x.composition().to_play(kind).unwrap()),
             ),
         }
+    }
+
+    pub const fn len(&self) -> usize {
+        let mut sum = 0;
+        {
+            let mut i = 0;
+            while i < 15 {
+                sum += self.0[i] as usize;
+                i += 1;
+            }
+        }
+        sum
+    }
+
+    pub const fn is_empty(&self) -> bool {
+        {
+            let mut i = 0;
+            while i < 15 {
+                if self.0[i] != 0 {
+                    return false;
+                }
+                i += 1;
+            }
+        }
+        true
+    }
+}
+
+impl Index<Rank> for Hand {
+    type Output = u8;
+
+    fn index(&self, index: Rank) -> &Self::Output {
+        &self.0[index as usize]
     }
 }

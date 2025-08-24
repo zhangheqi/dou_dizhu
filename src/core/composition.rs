@@ -23,28 +23,28 @@ pub struct Composition {
 impl Guard<Composition> {
     pub fn guess_play(&self) -> Option<Guard<Play>> {
         macro_rules! try_methods {
-            ($self:ident, $($method:ident,)*) => {
+            ($self_:ident $($method:ident)*) => {
                 let mut result;
                 $(
-                    result = $self.$method();
+                    result = $self_.$method();
                     if result.is_some() {
                         return result;
                     }
                 )*
             };
         }
-        try_methods!(
-            self,
-            to_solo, to_chain,
-            to_pair, to_pairs_chain,
-            to_trio, to_airplane,
-            to_trio_with_solo, to_airplane_with_solos,
-            to_trio_with_pair, to_airplane_with_pairs,
-            to_bomb,
-            to_four_with_dual_solo,
-            to_four_with_dual_pair,
-            to_rocket,
-        );
+        try_methods! {
+            self
+            to_solo to_chain
+            to_pair to_pairs_chain
+            to_trio to_airplane
+            to_trio_with_solo to_airplane_with_solos
+            to_trio_with_pair to_airplane_with_pairs
+            to_bomb
+            to_four_with_dual_solo
+            to_four_with_dual_pair
+            to_rocket
+        }
         None
     }
 
