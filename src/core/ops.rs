@@ -1,5 +1,5 @@
 use std::ops::{Add, Sub};
-use crate::{core::Guard, Hand, Play, Rank};
+use crate::{core::Guard, Hand, Play};
 
 pub trait UncheckedAddExt<Rhs = Self>
 where
@@ -54,114 +54,16 @@ impl UncheckedSubExt for Hand {
 impl UncheckedAddExt<&Guard<Play>> for Hand {
     type Output = Self;
 
-    unsafe fn unchecked_add(mut self, rhs: &Guard<Play>) -> Self::Output {
-        macro_rules! single_update {
-            ($self_:ident, $rank:ident, $count:literal) => {
-                $self_.0[*$rank as usize] += $count
-            };
-        }
-        macro_rules! batch_update {
-            ($self_:ident, $ranks:ident, $count:literal) => {
-                for rank in $ranks {
-                    $self_.0[*rank as usize] += $count;
-                }
-            };
-        }
-        match rhs {
-            Guard(Play::Solo(rank)) => single_update!(self, rank, 1),
-            Guard(Play::Chain(ranks)) => batch_update!(self, ranks, 1),
-            Guard(Play::Pair(rank)) => single_update!(self, rank, 2),
-            Guard(Play::PairsChain(ranks)) => batch_update!(self, ranks, 2),
-            Guard(Play::Trio(rank)) => single_update!(self, rank, 3),
-            Guard(Play::Airplane(ranks)) => batch_update!(self, ranks, 3),
-            Guard(Play::TrioWithSolo { trio, solo }) => {
-                single_update!(self, trio, 3);
-                single_update!(self, solo, 1);
-            }
-            Guard(Play::AirplaneWithSolos { airplane, solos }) => {
-                batch_update!(self, airplane, 3);
-                batch_update!(self, solos, 1);
-            }
-            Guard(Play::TrioWithPair { trio, pair }) => {
-                single_update!(self, trio, 3);
-                single_update!(self, pair, 2);
-            }
-            Guard(Play::AirplaneWithPairs { airplane, pairs }) => {
-                batch_update!(self, airplane, 3);
-                batch_update!(self, pairs, 2);
-            }
-            Guard(Play::Bomb(rank)) => single_update!(self, rank, 4),
-            Guard(Play::FourWithDualSolo { four, dual_solo }) => {
-                single_update!(self, four, 4);
-                batch_update!(self, dual_solo, 1);
-            }
-            Guard(Play::FourWithDualPair { four, dual_pair }) => {
-                single_update!(self, four, 4);
-                batch_update!(self, dual_pair, 2);
-            }
-            Guard(Play::Rocket) => {
-                self.0[Rank::BlackJoker as usize] += 1;
-                self.0[Rank::RedJoker as usize] += 1;
-            }
-        }
-        self
+    unsafe fn unchecked_add(self, rhs: &Guard<Play>) -> Self::Output {
+        unsafe { self.unchecked_add(rhs.to_hand()) }
     }
 }
 
 impl UncheckedSubExt<&Guard<Play>> for Hand {
     type Output = Self;
 
-    unsafe fn unchecked_sub(mut self, rhs: &Guard<Play>) -> Self::Output {
-        macro_rules! single_update {
-            ($self_:ident, $rank:ident, $count:literal) => {
-                $self_.0[*$rank as usize] = $self_.0[*$rank as usize].wrapping_sub($count)
-            };
-        }
-        macro_rules! batch_update {
-            ($self_:ident, $ranks:ident, $count:literal) => {
-                for rank in $ranks {
-                    $self_.0[*rank as usize] = $self_.0[*rank as usize].wrapping_sub($count);
-                }
-            };
-        }
-        match rhs {
-            Guard(Play::Solo(rank)) => single_update!(self, rank, 1),
-            Guard(Play::Chain(ranks)) => batch_update!(self, ranks, 1),
-            Guard(Play::Pair(rank)) => single_update!(self, rank, 2),
-            Guard(Play::PairsChain(ranks)) => batch_update!(self, ranks, 2),
-            Guard(Play::Trio(rank)) => single_update!(self, rank, 3),
-            Guard(Play::Airplane(ranks)) => batch_update!(self, ranks, 3),
-            Guard(Play::TrioWithSolo { trio, solo }) => {
-                single_update!(self, trio, 3);
-                single_update!(self, solo, 1);
-            }
-            Guard(Play::AirplaneWithSolos { airplane, solos }) => {
-                batch_update!(self, airplane, 3);
-                batch_update!(self, solos, 1);
-            }
-            Guard(Play::TrioWithPair { trio, pair }) => {
-                single_update!(self, trio, 3);
-                single_update!(self, pair, 2);
-            }
-            Guard(Play::AirplaneWithPairs { airplane, pairs }) => {
-                batch_update!(self, airplane, 3);
-                batch_update!(self, pairs, 2);
-            }
-            Guard(Play::Bomb(rank)) => single_update!(self, rank, 4),
-            Guard(Play::FourWithDualSolo { four, dual_solo }) => {
-                single_update!(self, four, 4);
-                batch_update!(self, dual_solo, 1);
-            }
-            Guard(Play::FourWithDualPair { four, dual_pair }) => {
-                single_update!(self, four, 4);
-                batch_update!(self, dual_pair, 2);
-            }
-            Guard(Play::Rocket) => {
-                self.0[Rank::BlackJoker as usize] = self.0[Rank::BlackJoker as usize].wrapping_sub(1);
-                self.0[Rank::RedJoker as usize] = self.0[Rank::RedJoker as usize].wrapping_sub(1);
-            }
-        }
-        self
+    unsafe fn unchecked_sub(self, rhs: &Guard<Play>) -> Self::Output {
+        unsafe { self.unchecked_sub(rhs.to_hand()) }
     }
 }
 

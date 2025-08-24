@@ -1,5 +1,5 @@
 use std::{cmp::Ordering, mem};
-use crate::{core::{Guard, UncheckedAddExt}, Hand, Rank};
+use crate::{core::Guard, Hand, Rank};
 
 /// A standard Dou Dizhu play.
 /// 
@@ -65,7 +65,57 @@ impl Play {
 
 impl Guard<Play> {
     pub fn to_hand(&self) -> Hand {
-        unsafe { Hand::EMPTY.unchecked_add(self) }
+        let mut counts = [0u8; 15];
+        macro_rules! solitary {
+            ($counts:ident, $rank:ident, $count:literal) => {
+                $counts[*$rank as usize] = $count
+            };
+        }
+        macro_rules! multiple {
+            ($counts:ident, $ranks:ident, $count:literal) => {
+                for rank in $ranks {
+                    $counts[*rank as usize] = $count;
+                }
+            };
+        }
+        match self {
+            Guard(Play::Solo(rank)) => solitary!(counts, rank, 1),
+            Guard(Play::Chain(ranks)) => multiple!(counts, ranks, 1),
+            Guard(Play::Pair(rank)) => solitary!(counts, rank, 2),
+            Guard(Play::PairsChain(ranks)) => multiple!(counts, ranks, 2),
+            Guard(Play::Trio(rank)) => solitary!(counts, rank, 3),
+            Guard(Play::Airplane(ranks)) => multiple!(counts, ranks, 3),
+            Guard(Play::TrioWithSolo { trio, solo }) => {
+                solitary!(counts, trio, 3);
+                solitary!(counts, solo, 1);
+            }
+            Guard(Play::AirplaneWithSolos { airplane, solos }) => {
+                multiple!(counts, airplane, 3);
+                multiple!(counts, solos, 1);
+            }
+            Guard(Play::TrioWithPair { trio, pair }) => {
+                solitary!(counts, trio, 3);
+                solitary!(counts, pair, 2);
+            }
+            Guard(Play::AirplaneWithPairs { airplane, pairs }) => {
+                multiple!(counts, airplane, 3);
+                multiple!(counts, pairs, 2);
+            }
+            Guard(Play::Bomb(rank)) => solitary!(counts, rank, 4),
+            Guard(Play::FourWithDualSolo { four, dual_solo }) => {
+                solitary!(counts, four, 4);
+                multiple!(counts, dual_solo, 1);
+            }
+            Guard(Play::FourWithDualPair { four, dual_pair }) => {
+                solitary!(counts, four, 4);
+                multiple!(counts, dual_pair, 2);
+            }
+            Guard(Play::Rocket) => {
+                counts[Rank::BlackJoker as usize] = 1;
+                counts[Rank::RedJoker as usize] = 1;
+            }
+        }
+        Hand(counts)
     }
 }
 
