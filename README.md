@@ -43,7 +43,7 @@ fn main() {
 
     // Count how many stronger plays of the same kind exist in a full deck
     assert_eq!(
-        Hand::full_deck()
+        Hand::FULL_DECK
             .plays(airplane_with_solos.kind())
             .filter(|p| p > &airplane_with_solos)
             .count(),
