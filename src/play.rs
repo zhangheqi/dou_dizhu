@@ -3,7 +3,10 @@ use crate::{core::Guard, Hand, Rank};
 
 /// A standard Dou Dizhu play.
 /// 
-/// For the full specification of standard plays, see the [Pagat rules for Dou Dizhu](https://www.pagat.com/climbing/doudizhu.html).
+/// For the full specification of standard plays, see the
+/// [Pagat rules for Dou Dizhu](https://www.pagat.com/climbing/doudizhu.html).
+/// 
+/// Many of the methods of `Play` are implemented on [`Guard<Play>`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Play {
     /// Any single card.
@@ -43,6 +46,15 @@ pub enum Play {
 }
 
 impl Play {
+    /// Returns the category of this play as a [`PlayKind`].
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use dou_dizhu::*;
+    /// 
+    /// assert_eq!(play!(const { Three: 4 }).unwrap().kind(), Bomb);
+    /// ```
     pub const fn kind(&self) -> PlayKind {
         match self {
             Play::Solo(_) => PlayKind::Solo,
@@ -64,6 +76,21 @@ impl Play {
 }
 
 impl Guard<Play> {
+    /// Converts this play into a [`Hand`].
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use dou_dizhu::*;
+    /// 
+    /// assert_eq!(
+    ///     play!(const { Three: 4 })
+    ///         .unwrap()
+    ///         .to_hand()
+    ///         .len(),
+    ///     4,
+    /// );
+    /// ```
     pub fn to_hand(&self) -> Hand {
         let mut counts = [0u8; 15];
         macro_rules! solitary {
@@ -202,21 +229,39 @@ impl PartialOrd for Guard<Play> {
     }
 }
 
+/// Category of a standard Dou Dizhu play.
+/// 
+/// For the full specification of standard plays, see the
+/// [Pagat rules for Dou Dizhu](https://www.pagat.com/climbing/doudizhu.html).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlayKind {
+    /// Any single card.
     Solo,
+    /// Five or more consecutive individual cards.
     Chain,
+    /// Two matching cards of equal rank.
     Pair,
+    /// Three or more consecutive pairs.
     PairsChain,
+    /// Three-of-a-kind: Three individual cards of the same rank.
     Trio,
+    /// Two or more consecutive trios.
     Airplane,
+    /// Three cards of the same rank with a solo as the kicker.
     TrioWithSolo,
+    /// Two or more consecutive trios with each carries a distinct individual card as the kicker.
     AirplaneWithSolos,
+    /// Three cards of the same rank with a pair as the kicker.
     TrioWithPair,
+    /// Two or more consecutive trios with each carrying a pair as the kicker.
     AirplaneWithPairs,
+    /// Four-of-a-kind. Four cards of the same rank without the kicker is called a bomb, which defies category rules, even beats four with a kicker.
     Bomb,
+    /// Four-of-a-kind with two distinct individual cards as the kicker.
     FourWithDualSolo,
+    /// Four-of-a-kind with two sets of pair as the kicker.
     FourWithDualPair,
+    /// Red Joker and Black Joker.
     Rocket,
 }
 

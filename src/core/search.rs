@@ -48,6 +48,11 @@ where
 }
 
 impl PlaySpec<RangeInclusive<u8>, fn(u8) -> u8> {
+    /// Returns a `PlaySpec` configured for the given standard `PlayKind`.
+    /// 
+    /// # Panics
+    /// 
+    /// Panics for `PlayKind::Rocket`, which cannot be represented by `PlaySpec`.
     pub const fn standard(kind: PlayKind) -> Self {
         match kind {
             PlayKind::Solo => Self { primal_size: 1, primal_count: 1..=1, kicker_size: 0, kicker_count: |_| 0 },
@@ -72,6 +77,7 @@ impl PlaySpec<RangeInclusive<u8>, fn(u8) -> u8> {
 /// 
 /// This trait is sealed and cannot be implemented for types outside of `dou_dizhu`.
 pub trait SearchExt: private::Sealed {
+    /// Returns an iterator over all plays in this hand that match the given [`PlaySpec`].
     fn plays<R, F>(self, spec: PlaySpec<R, F>) -> impl Iterator<Item = Hand>
     where
         R: RangeBounds<u8>,

@@ -46,7 +46,7 @@ impl Hand {
     /// # Examples
     /// 
     /// ```
-    /// use dou_dizhu::{hand, Rank};
+    /// use dou_dizhu::*;
     /// 
     /// let bomb = hand!(const {
     ///     Ten: 4,
@@ -65,7 +65,7 @@ impl Hand {
     /// # Examples
     /// 
     /// ```
-    /// use dou_dizhu::{hand, Play};
+    /// use dou_dizhu::*;
     /// 
     /// let rocket = hand!(const { BlackJoker, RedJoker })
     ///     .to_play()
@@ -77,6 +77,18 @@ impl Hand {
         self.composition().guess_play()
     }
 
+    /// Returns an iterator over all standard plays of the given kind available in this hand.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use dou_dizhu::*;
+    /// 
+    /// assert_eq!(
+    ///     Hand::FULL_DECK.plays(AirplaneWithSolos).count(),
+    ///     7516,
+    /// )
+    /// ```
     pub fn plays(self, kind: PlayKind) -> impl Iterator<Item = Guard<Play>> {
         match kind {
             PlayKind::Rocket => {
@@ -95,6 +107,18 @@ impl Hand {
         }
     }
 
+    /// Returns the total number of cards in this hand.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use dou_dizhu::*;
+    /// 
+    /// assert_eq!(
+    ///     Hand::FULL_DECK.len(),
+    ///     54,
+    /// )
+    /// ```
     pub const fn len(&self) -> usize {
         let mut sum = 0;
         {
@@ -107,6 +131,15 @@ impl Hand {
         sum
     }
 
+    /// Returns `true` if the hand contains no cards.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use dou_dizhu::*;
+    /// 
+    /// assert!(Hand::EMPTY.is_empty());
+    /// ```
     pub const fn is_empty(&self) -> bool {
         {
             let mut i = 0;

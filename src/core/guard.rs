@@ -23,18 +23,15 @@ impl<T> Guard<T> {
     /// # Examples
     /// 
     /// ```
-    /// use dou_dizhu::{core::Guard, hand, Play};
+    /// use dou_dizhu::{*, core::Guard};
     /// 
-    /// let rocket: Guard<Play> = hand!(const {
+    /// let rocket: Guard<Play> = play!(const {
     ///     BlackJoker,
     ///     RedJoker,
     /// })
-    /// .to_play()
     /// .unwrap();
     /// 
     /// assert!(matches!(
-    ///     // Cannot perform pattern matching on the inner Play
-    ///     // unless you consume the Guard via `into_inner()`.
     ///     rocket.into_inner(),
     ///     Play::Rocket,
     /// ));
@@ -43,6 +40,35 @@ impl<T> Guard<T> {
         self.0
     }
 
+    /// Creates a Guard without performing any validation.
+    /// 
+    /// Use only when you have already proven that `value` upholds all invariants
+    /// required by this crate for `T` (e.g., via prior validation or construction
+    /// from a trusted source). This bypass must not be used if the value may be
+    /// mutated in ways that could later violate those invariants, including through
+    /// interior mutability.
+    /// 
+    /// # Safety
+    /// 
+    /// The caller must guarantee that:
+    /// - `value` satisfies all invariants expected by `Guard<T>` for the entirety
+    ///   of the returned guard’s lifetime.
+    /// - No aliasing or interior mutations can break those invariants after creation.
+    /// 
+    /// Prefer using safe constructors and validation APIs provided by this crate.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use dou_dizhu::{*, core::Guard};
+    /// 
+    /// let play: Guard<Play> = unsafe {
+    ///     Guard::new_unchecked(
+    ///         Play::Bomb(Rank::Three)
+    ///     )
+    /// };
+    /// assert!((Hand::FULL_DECK - &play).is_some());
+    /// ```
     pub unsafe fn new_unchecked(value: T) -> Self {
         Self(value)
     }

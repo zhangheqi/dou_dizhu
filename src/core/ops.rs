@@ -1,6 +1,21 @@
+//! Arithmetic extension traits for [`Hand`] and [`Guard<Play>`].
+
 use std::ops::{Add, Sub};
 use crate::{core::Guard, Hand, Play};
 
+/// Unchecked addition helpers for sealed operand combinations.
+/// 
+/// Provides an unsafe `unchecked_add` to combine values without validating
+/// crate invariants (e.g., per-rank card count limits). Prefer the checked
+/// `Add` implementations that return `Option<Self>`. This trait is sealed and
+/// only implemented for [`Hand`] and `&Guard<Play>`.
+/// 
+/// # Safety
+/// 
+/// - Both operands must already satisfy all crate invariants.
+/// - The component-wise sum must also satisfy all invariants (no overflow,
+///   and no per-rank count exceeding allowed limits). The caller is
+///   responsible for guaranteeing these conditions.
 pub trait UncheckedAddExt<Rhs = Self>
 where
     Self: private::Sealed,
@@ -8,9 +23,25 @@ where
 {
     type Output;
 
+    /// Performs the unchecked addition operation.
+    /// 
+    /// See [`UncheckedAddExt`] for the safety contract.
     unsafe fn unchecked_add(self, rhs: Rhs) -> Self::Output;
 }
 
+/// Unchecked subtraction helpers for sealed operand combinations.
+/// 
+/// Provides an unsafe `unchecked_sub` to subtract values without validating
+/// crate invariants. Prefer the checked `Sub` implementations that return
+/// `Option<Self>`. This trait is sealed and only implemented for [`Hand`] and
+/// `&Guard<Play>`.
+/// 
+/// # Safety
+/// 
+/// - Both operands must already satisfy all crate invariants.
+/// - For every component, lhs must be >= rhs (no underflow); the resulting
+///   difference must satisfy all invariants. The caller is responsible for
+///   guaranteeing these conditions.
 pub trait UncheckedSubExt<Rhs = Self>
 where
     Self: private::Sealed,
@@ -18,6 +49,9 @@ where
 {
     type Output;
 
+    /// Performs the unchecked subtraction operation.
+    /// 
+    /// See [`UncheckedSubExt`] for the safety contract.
     unsafe fn unchecked_sub(self, rhs: Rhs) -> Self::Output;
 }
 

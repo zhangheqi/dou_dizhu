@@ -4,7 +4,7 @@
 /// 
 /// ```
 /// # fn main() -> Result<(), String> {
-/// use dou_dizhu::{hand, Hand};
+/// use dou_dizhu::*;
 /// 
 /// // Compile-time hand
 /// const FOUR_WITH_DUAL_SOLO: Hand = hand!(const {
@@ -90,6 +90,18 @@ macro_rules! __const_hand {
     };
 }
 
+/// Macro for constructing [`Play`](crate::Play) instances.
+/// 
+/// The argument syntax for this macro is identical to that of [`hand`].
+/// 
+/// # Examples
+/// 
+/// ```
+/// use dou_dizhu::{*, core::Guard};
+/// 
+/// let bomb: Guard<Play> = play!(const { Three: 4 }).unwrap();
+/// assert!(matches!(*bomb, Play::Bomb(Rank::Three)));
+/// ```
 #[macro_export]
 macro_rules! play {
     (const {$($t:tt)*}) => {
